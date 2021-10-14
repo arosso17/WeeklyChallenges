@@ -62,6 +62,7 @@ def mainloop():
     clock = pygame.time.Clock()
     first = True
     FPS = 60
+    dt = 60
     # 1024 x 768
     while True:
         screen, events = yield
@@ -98,21 +99,15 @@ def mainloop():
             if event.type == pygame.QUIT:
                 return
         for obj in all_objects:
-            obj.logic(objects=all_objects)
+            obj.logic(dt)
         screen.fill(BACKGROUND)
         for object in sorted(all_objects, key=attrgetter("rect.bottom")):
             object.draw(screen)
         screen.blit(lights, (0, 0))
         screen.blit(fog_of_war, (0, 0))
 
-        # for ghost in ghosts:
-        #     ghost.logic()
-        #     dis = dist(ghost.pos, player.pos)
-        #     if dis < 175:
-        #         ghost.draw(screen)
-
         for ghost in ghosts:
-            ghost.logic()
+            ghost.logic(dt)
             dis = dist(ghost.pos, player.pos)
             if dis < 200:
                 ghost.sprite.set_alpha(255)
@@ -128,7 +123,8 @@ def mainloop():
                            (player.pos[0] + player.size[0] / 2, player.pos[1] + player.size[1] / 2), 50)
         pygame.draw.circle(explored_map, (0, 0, 0, 150), [player.pos[0] + player.size[0] / 2, player.pos[1] + player.size[1] / 2], 150)
         clock.tick(FPS)
-        print(clock.get_fps())
+        dt = clock.get_fps()
+        print(dt)
 
 if __name__ == "__main__":
     wclib.run(mainloop())

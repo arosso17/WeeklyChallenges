@@ -34,7 +34,7 @@ class Object:
     def draw(self, screen):
         screen.blit(self.sprite, self.pos)
 
-    def logic(self, **kwargs):
+    def logic(self, dt, **kwargs):
         pass
 
 
@@ -64,9 +64,10 @@ class Object8Directional(Object):
         unit = self.SIZE * self.SCALE
         return sheet.subsurface(idx * unit, 0, unit, unit)
 
-    def logic(self, **kwargs):
+    def logic(self, dt, **kwargs):
         self.velocity *= self.DAMPING
         self.velocity += self.acceleration
+        # self.velocity *= dt/60
         self.pos += self.velocity
         self.sprite = self.get_image()
 
@@ -75,13 +76,13 @@ class Object8Directional(Object):
 
 
 class Player(Object8Directional):
-    def logic(self, **kwargs):
+    def logic(self, dt, **kwargs):
         pressed = pygame.key.get_pressed()
         direction_x = pressed[pygame.K_RIGHT] - pressed[pygame.K_LEFT]
         direction_y = pressed[pygame.K_DOWN] - pressed[pygame.K_UP]
 
         self.acceleration = pygame.Vector2(direction_x, direction_y) * self.ACCELERATION
-        super().logic(**kwargs)
+        super().logic(dt, **kwargs)
 
 
 class Ghost(Object8Directional):
@@ -99,7 +100,7 @@ class Ghost(Object8Directional):
         direction = from_polar(60, gauss(self.velocity.as_polar()[1], 30))
         return self.rect.center + direction
 
-    def logic(self, **kwargs):
+    def logic(self, dt, **kwargs):
         middle_area = SCREEN.inflate(-30, -30)
         while self.rect.collidepoint(self.goal) or not middle_area.collidepoint(
             self.goal
@@ -109,7 +110,7 @@ class Ghost(Object8Directional):
         self.acceleration = (
             self.goal - self.rect.center
         ).normalize() * self.ACCELERATION
-        super().logic(**kwargs)
+        super().logic(dt, **kwargs)
 
 
 class SolidObject(Object):

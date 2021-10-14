@@ -62,6 +62,9 @@ def mainloop():
     clock = pygame.time.Clock()
     first = True
     FPS = 60
+    dt = 1/60
+    p = 0
+    q = -1920
     # 1024 x 768
     while True:
         screen, events = yield
@@ -69,7 +72,7 @@ def mainloop():
         if first:
             # for pic
             fog = load_image("fog")
-            fog.set_alpha(25)
+            fog.set_alpha(30)
 
             lights = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
             fog_of_war = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
@@ -92,27 +95,32 @@ def mainloop():
                                      (obj.rect[0] - 45 + obj.rect[2], obj.rect[1] + 84, 21, 18))
             # for pic
             explored_map.blit(fog, (0, 0))
-            pygame.draw.rect(fog_of_war, (0, 0, 0, 150), [0, 0, screen.get_width(), screen.get_height()])
             first = False
+
+        # if p > 1024:
+        #     p = -1920
+        # if q > 1024:
+        #     q = -1920
+        #
+        # fog_of_war.blit(fog, (p, 0))
+        # fog_of_war.blit(fog, (q, -20))
+        #
+        # p += 1
+        # q += 1
+
         for event in events:
             if event.type == pygame.QUIT:
                 return
         for obj in all_objects:
-            obj.logic(objects=all_objects)
+            obj.logic(dt)
         screen.fill(BACKGROUND)
         for object in sorted(all_objects, key=attrgetter("rect.bottom")):
             object.draw(screen)
         screen.blit(lights, (0, 0))
-        screen.blit(fog_of_war, (0, 0))
-
-        # for ghost in ghosts:
-        #     ghost.logic()
-        #     dis = dist(ghost.pos, player.pos)
-        #     if dis < 175:
-        #         ghost.draw(screen)
+        # screen.blit(fog_of_war, (0, 0))
 
         for ghost in ghosts:
-            ghost.logic()
+            ghost.logic(dt)
             dis = dist(ghost.pos, player.pos)
             if dis < 200:
                 ghost.sprite.set_alpha(255)
@@ -120,15 +128,17 @@ def mainloop():
                     ghost.sprite.set_alpha(355 - (355/150)*dis)
                 ghost.draw(screen)
 
-        screen.blit(explored_map, (0, 0))
         for i in range(0, 150, 2):
             pygame.draw.circle(fog_of_war, (0, 0, 0, i),
                                (player.pos[0] + player.size[0] / 2, player.pos[1] + player.size[1] / 2), i + 50, 2)
         pygame.draw.circle(fog_of_war, (0, 0, 0, 0),
                            (player.pos[0] + player.size[0] / 2, player.pos[1] + player.size[1] / 2), 50)
         pygame.draw.circle(explored_map, (0, 0, 0, 150), [player.pos[0] + player.size[0] / 2, player.pos[1] + player.size[1] / 2], 150)
+        screen.blit(fog_of_war, (0, 0))
+        screen.blit(explored_map, (0, 0))
         clock.tick(FPS)
-        print(clock.get_fps())
+        dt = clock.get_fps()
+        print(dt)
 
 if __name__ == "__main__":
     wclib.run(mainloop())
