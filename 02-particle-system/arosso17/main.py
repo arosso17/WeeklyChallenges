@@ -19,9 +19,9 @@ __package__ = "02-particle-system." + Path(__file__).parent.name
 # ---- Recommended: don't modify anything above this line ---- #
 
 # Metadata about your submission
-__author__ = "CozyFractal#0042"  # Put yours!
+__author__ = "treehuggerbear1#2361"  # Put yours!
 __achievements__ = [  # Uncomment the ones you've done
-    # "Casual",
+    "Casual",
     # "Ambitious",
     # "Adventurous",
 ]
@@ -43,11 +43,23 @@ def mainloop():
 
     while True:
         screen, events = yield
+        pos = pygame.mouse.get_pos()
+        keys = pygame.key.get_pressed()
+        # if pygame.mouse.get_pressed()[0]:
+        #     for _ in range(20):
+        #         Particle([pos[0], pos[1]], (255, 255, 255), 50)
         for event in events:
             if event.type == pygame.QUIT:
                 return
+            # if event.type == pygame.MOUSEBUTTONUP:
+            #     for _ in range(20):
+            #         Particle([pos[0], pos[1]], (255, 255, 255), 50)
             else:
                 state.handle_event(event)
+        for particle in Particle.DEL:
+            Particle.PARTICLES.remove(particle)
+            del particle
+        Particle.DEL = []
 
         # Note: the logic for collisions is in the Asteroids class.
         # This may seem arbitrary, but the only collisions that we consider
@@ -56,6 +68,11 @@ def mainloop():
 
         screen.fill(BACKGROUND)
         state.draw(screen)
+        for particle in Particle.PARTICLES:
+            particle.logic()
+            particle.draw(screen)
+        t = text(f"PARTICLES: {len(Particle.PARTICLES)}", "#89C4F4")
+        screen.blit(t, (4, 70))
 
 
 if __name__ == "__main__":

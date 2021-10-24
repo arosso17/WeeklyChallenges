@@ -14,11 +14,14 @@ from colorsys import hsv_to_rgb
 from functools import lru_cache
 from operator import attrgetter
 from random import gauss, choices, uniform
+import random
+import numpy as np
 
 import pygame
 
 # noinspection PyPackages
 from .utils import *
+from .particles import Particle
 
 
 class State:
@@ -49,6 +52,7 @@ class State:
     def draw(self, screen):
         for obj in sorted(self.objects, key=attrgetter("Z")):
             obj.draw(screen)
+            # print(type(obj))
 
     def handle_event(self, event):
         for obj in self.objects:
@@ -106,7 +110,7 @@ class Object:
         # We round the rotation to the nearest integer so that
         # the cache has a chance to work. Otherwise there would
         # always be cache misses: it is very unlikely to have
-        # to floats that are equal.
+        # two floats that are equal.
         return rotate_image(self.sprite, int(self.rotation))
 
     def get_rect(self):
@@ -208,7 +212,10 @@ class Player(Object):
         self.rotation += rotation_acc * self.ROTATION_ACCELERATION * min(1.0, 0.4 + abs(self.speed))
 
         self.vel.from_polar((self.speed, self.INITIAL_ROTATION - self.rotation))
-
+        if pressed[pygame.K_UP]:
+            cols = [(207, 53, 46), (251, 139, 35), (255, 189, 46), (250, 250, 250)]
+            for i in range(30):
+                Particle([self.center[0] + from_polar(self.radius+5, self.INITIAL_ROTATION - self.rotation)[0], self.center[1] + from_polar(self.radius+5, self.INITIAL_ROTATION - self.rotation)[1]], random.choice(cols), 15, shape="fire", vel=self.vel)
         super().logic()
 
     def fire(self):
@@ -218,9 +225,16 @@ class Player(Object):
         self.fire_cooldown = self.FIRE_COOLDOWN
         bullet = Bullet(self.center, 270 - self.rotation)
         self.state.add(bullet)
-
-        # You can add particles here too.
-        ...
+        angle = self.INITIAL_ROTATION - self.rotation
+        nx = np.cos(np.deg2rad(angle))
+        ny = np.sin(np.deg2rad(angle))
+        if self.vel[0] != 0:
+            nx = abs(self.vel[0])/self.vel[0]
+        if self.vel[1] != 0:
+            ny = abs(self.vel[1]) / self.vel[1]
+        angle = self.INITIAL_ROTATION - self.rotation + 180
+        for i in range(20):
+            Particle([self.center[0] + from_polar(self.radius+5, angle)[0], self.center[1] + from_polar(self.radius+5, angle)[1]], (251, 39, 25), self.radius, shape="fire", vel=[-self.vel[0] + nx*5, -self.vel[1] + ny*5])
 
     def on_asteroid_collision(self, asteroid: "Asteroid"):
         # For simplicity I just explode the asteroid, but depending on what you aim for,
@@ -299,9 +313,9 @@ class Asteroid(Object):
                 self.state.add(
                     Asteroid(self.center, perp_velocity * mult, self.level - 1, self.color)
                 )
-
-        # You'll add particles here for sure ;)
-        ...
+        rec = self.get_rect()
+        for _ in range(20):
+            Particle([rec.centerx, rec.centery], self.color, self.radius, "fragment")
 
     def random_color(self):
         r, g, b = hsv_to_rgb(uniform(0, 1), 0.8, 0.8)
@@ -342,7 +356,7 @@ class FpsCounter(Object):
         self.frame_starts = deque([time.time()], maxlen=self.REMEMBER)
 
         dummy_surface = pygame.Surface((1, 1))
-        super().__init__((4, 8), (0, 0), dummy_surface)
+        super().__init__((4, 50), (0, 0), dummy_surface)
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
